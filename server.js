@@ -30,7 +30,7 @@ app.use('/api/order-items', orderItemRoutes);
 app.use('/api/wishlists', wishlistRoutes);
 
 // Sync database and start server
-sequelize.sync({ alter: false })
+sequelize.sync({ alter: true })
   .then(() => {
     console.log('Database connected and synchronized.');
     const PORT = process.env.PORT || 3000;

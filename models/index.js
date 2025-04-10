@@ -2,7 +2,7 @@
 const sequelize = require('../config/db');
 
 const User = require('./User');
-const Category = require('./Category');
+const Category = require('./category');
 const Product = require('./Product');
 const Cart = require('./Cart');
 const CartItem = require('./CartItem');

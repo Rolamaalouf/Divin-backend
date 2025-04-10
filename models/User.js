@@ -19,11 +19,17 @@ User.init({
     type: DataTypes.STRING, 
     allowNull: false 
   },
+  role: {
+ type: DataTypes.ENUM('customer', 'admin'),
+        defaultValue: 'customer'
+  },
   name: { 
     type: DataTypes.STRING 
   },
   address: { 
-    type: DataTypes.STRING 
+    type: DataTypes.JSON,
+    allowNull: true,  
+    defaultValue: null
   },
 }, {
   sequelize,
