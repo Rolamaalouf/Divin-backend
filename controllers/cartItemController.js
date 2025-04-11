@@ -7,9 +7,11 @@ exports.createCartItem = async (req, res) => {
     const cartItem = await CartItem.create({ cart_id, product_id, quantity });
     res.status(201).json(cartItem);
   } catch (error) {
+    console.error('CREATE CART ITEM ERROR:', error); // Add this line
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 exports.getCartItems = async (req, res) => {
   try {

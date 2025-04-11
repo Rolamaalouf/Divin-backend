@@ -1,12 +1,17 @@
 const { Order } = require('../models');
 
-// Create a new order
+// Create a new order (supports both customer and guest)
 exports.createOrder = async (req, res) => {
   try {
-    const { user_id, status, address, shipping_fees, promocode } = req.body;
+    const { user_id, guest_id, status, address, shipping_fees, promocode } = req.body;
+
+    if (!user_id && !guest_id) {
+      return res.status(400).json({ error: 'Either user_id or guest_id is required.' });
+    }
 
     const order = await Order.create({
-      user_id,
+      user_id: user_id || null,
+      guest_id: guest_id || null,
       status,
       address,
       shipping_fees,
@@ -15,7 +20,7 @@ exports.createOrder = async (req, res) => {
 
     res.status(201).json(order);
   } catch (error) {
-    console.error(error);
+    console.error('Error creating order:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -65,3 +70,16 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+exports.createGuestOrder = async (req, res) => {
+  try {
+    const { guest_id, status, address, shipping_fees, promocode } = req.body;
+    const order = await Order.create({
+      guest_id, status, address, shipping_fees, promocode
+    });
+    res.status(201).json(order);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+

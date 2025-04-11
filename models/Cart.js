@@ -10,9 +10,13 @@ Cart.init({
     autoIncrement: true, 
     primaryKey: true 
   },
+  guest_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
   user_id: { 
     type: DataTypes.INTEGER, 
-    allowNull: false 
+    allowNull: true 
   }
 }, {
   sequelize,

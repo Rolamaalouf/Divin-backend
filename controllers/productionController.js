@@ -2,38 +2,52 @@
 const supabase = require('../config/supabase');
 const { Product } = require('../models');
 
+
 exports.createProduct = async (req, res) => {
   try {
-    let imageUrl = null;
-    if (req.file) {
-      const { data, error } = await supabase.storage
-        .from('product-images')
-        .upload(`products/${Date.now()}-${req.file.originalname}`, req.file.buffer, {
-          contentType: req.file.mimetype,
-        });
-      
-      if (error) return res.status(400).json({ error: 'Image upload failed', details: error });
-      
-      const { publicURL } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(data.path);
-      imageUrl = publicURL;
+    console.log("req.files:", req.files);
+
+    const imageUrls = [];
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const { data, error } = await supabase.storage
+          .from('product-images')
+          .upload(`products/${Date.now()}-${file.originalname}`, file.buffer, {
+            contentType: file.mimetype,
+          });
+
+        if (error) return res.status(400).json({ error: 'Image upload failed', details: error });
+
+        const { data: publicUrlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(data.path);
+
+        imageUrls.push(publicUrlData.publicUrl);
+      }
     }
-    
+
     const { name, price, description, category_id, stock } = req.body;
+
     const product = await Product.create({
       name,
       price,
       description,
       category_id,
       stock,
-      image: imageUrl,
+      image: imageUrls.length > 0 ? imageUrls : null,
     });
+
+    console.log("Final product object:", product);
     res.status(201).json(product);
   } catch (error) {
+    console.error("Error during product creation:", error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+
+
 
 exports.getProducts = async (req, res) => {
   try {
@@ -57,14 +71,55 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const [updated] = await Product.update(req.body, { where: { id } });
-    if (!updated) return res.status(404).json({ message: 'Product not found' });
-    const updatedProduct = await Product.findByPk(id);
-    res.json(updatedProduct);
+    console.log("Update request for product ID:", id);
+
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const { name, price, description, category_id, stock } = req.body;
+    const imageUrls = [];
+
+    // Upload new images if available
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const { data, error } = await supabase.storage
+          .from('product-images')
+          .upload(`products/${Date.now()}-${file.originalname}`, file.buffer, {
+            contentType: file.mimetype,
+          });
+
+        if (error) {
+          console.error('Image upload failed:', error);
+          return res.status(400).json({ error: 'Image upload failed', details: error });
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('product-images')
+          .getPublicUrl(data.path);
+
+        imageUrls.push(publicUrlData.publicUrl);
+      }
+    }
+
+    // Update fields and images
+    await product.update({
+      name: name ?? product.name,
+      price: price ?? product.price,
+      description: description ?? product.description,
+      category_id: category_id ?? product.category_id,
+      stock: stock ?? product.stock,
+      image: imageUrls.length > 0 ? imageUrls : product.image, // Replace only if new images are uploaded
+    });
+
+    res.json(product);
   } catch (error) {
+    console.error("Error during product update:", error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 exports.deleteProduct = async (req, res) => {
   try {
@@ -73,6 +128,39 @@ exports.deleteProduct = async (req, res) => {
     if (!deleted) return res.status(404).json({ message: 'Product not found' });
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] },
+    });
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Optionally: allow users to only view their own profile unless admin
+    if (req.user.role !== 'admin' && req.user.userId !== parseInt(id)) {
+      return res.status(403).json({ message: 'Forbidden: You can only access your own data' });
+    }
+
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+    });
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json(user);
+  } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 };

@@ -9,28 +9,39 @@ Order.init({
     autoIncrement: true, 
     primaryKey: true 
   },
+
   user_id: { 
     type: DataTypes.INTEGER, 
-    allowNull: false 
+    allowNull: true // NULL for guest orders
   },
+
+  guest_id: {
+    type: DataTypes.UUID,
+    allowNull: true, // NULL for logged-in users
+  },
+
   promocode: {
     type: DataTypes.STRING,
     allowNull: true
   },
+
   shipping_fees: {
     type: DataTypes.FLOAT,
     allowNull: true,
     defaultValue: 0
   },
+
   address: {
     type: DataTypes.JSON,
     allowNull: true,
     defaultValue: null
   },
+
   status: { 
     type: DataTypes.STRING,
     defaultValue: 'pending' 
   }
+
 }, {
   sequelize,
   modelName: 'Order',

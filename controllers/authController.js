@@ -61,3 +61,70 @@ exports.logout = (req, res) => {
   res.clearCookie('token');
   res.json({ message: 'Logged out successfully' });
 };
+exports.editUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email, name, role, address } = req.body;
+
+    const [updated] = await User.update(
+      { email, name, role, address },
+      { where: { id } }
+    );
+
+    if (!updated) return res.status(404).json({ message: 'User not found' });
+
+    const updatedUser = await User.findByPk(id, { attributes: { exclude: ['password'] } });
+    res.json({ message: 'User updated', user: updatedUser });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deleted = await User.destroy({ where: { id } });
+
+    if (!deleted) return res.status(404).json({ message: 'User not found' });
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll({
+      attributes: { exclude: ['password'] },
+    });
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Optionally: allow users to only view their own profile unless admin
+    if (req.user.role !== 'admin' && req.user.userId !== parseInt(id)) {
+      return res.status(403).json({ message: 'Forbidden: You can only access your own data' });
+    }
+
+    const user = await User.findByPk(id, {
+      attributes: { exclude: ['password'] },
+    });
+
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
