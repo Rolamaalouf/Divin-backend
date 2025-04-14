@@ -1,6 +1,7 @@
 // server.js
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const { sequelize } = require('./models');
 
@@ -14,7 +15,11 @@ const orderItemRoutes = require('./routes/orderItemRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 
 const app = express();
-
+// Enable CORS for all routes
+app.use(cors({
+  origin: 'http://localhost:3000', // Allow your frontend's URL
+  credentials: true,              // Allow cookies to be sent (if needed)
+}));
 // Middlewares
 app.use(express.json());
 app.use(cookieParser());
@@ -33,7 +38,7 @@ app.use('/api/wishlists', wishlistRoutes);
 sequelize.sync({ alter: true })
   .then(() => {
     console.log('Database connected and synchronized.');
-    const PORT = process.env.PORT || 3000;
+    const PORT = process.env.PORT;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((error) => {
