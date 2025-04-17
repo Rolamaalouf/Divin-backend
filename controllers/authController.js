@@ -100,7 +100,7 @@ exports.getAllUsers = async (req, res) => {
     const users = await User.findAll({
       attributes: { exclude: ['password'] },
     });
-    res.json(users);
+    res.status(200).json({ users });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

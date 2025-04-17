@@ -4,7 +4,7 @@ const orderController = require('../controllers/orderController');
 const { authenticate, authorize } = require('../middlewares/authMiddleware');
 
 // Authenticated customers create/view orders
-router.post('/', authenticate, authorize(['customer']), orderController.createOrder);
+router.post('/', authenticate, authorize(['admin', 'customer']), orderController.createOrder);
 router.get('/', authenticate, authorize(['admin', 'customer']), orderController.getOrders);
 router.get('/:id', authenticate, authorize(['admin', 'customer']), orderController.getOrderById);
 router.put('/:id', authenticate, authorize(['admin']), orderController.updateOrder);
