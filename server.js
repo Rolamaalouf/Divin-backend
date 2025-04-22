@@ -17,7 +17,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const app = express();
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://localhost:3001', // Allow your frontend's URL
+  origin: 'http://localhost:3000', // Allow your frontend's URL
   credentials: true,              // Allow cookies to be sent (if needed)
 }));
 // Middlewares

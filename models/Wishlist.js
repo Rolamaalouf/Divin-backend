@@ -13,7 +13,7 @@ Wishlist.init({
   },
   user_id: {
     type: DataTypes.INTEGER,
-    allowNull: false
+    allowNull: true
   },
   product_id: {
     type: DataTypes.INTEGER,

@@ -13,6 +13,7 @@ Cart.init({
   guest_id: {
     type: DataTypes.UUID,
     allowNull: true,
+    unique: true
   },
   user_id: { 
     type: DataTypes.INTEGER, 

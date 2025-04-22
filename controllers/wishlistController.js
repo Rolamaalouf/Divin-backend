@@ -3,8 +3,10 @@ const { Wishlist } = require('../models');
 
 exports.createWishlistItem = async (req, res) => {
   try {
-    const { user_id, product_id } = req.body;
+    const { product_id } = req.body;
+    const user_id = req.user.id; // get user ID from authenticated request
     const wishlistItem = await Wishlist.create({ user_id, product_id });
+    
     res.status(201).json(wishlistItem);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
