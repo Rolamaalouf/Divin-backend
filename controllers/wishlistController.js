@@ -3,12 +3,18 @@ const { Wishlist } = require('../models');
 
 exports.createWishlistItem = async (req, res) => {
   try {
-    const { product_id } = req.body;
-    const user_id = req.user.id; // get user ID from authenticated request
-    const wishlistItem = await Wishlist.create({ user_id, product_id });
-    
+    const { product_id, guest_id } = req.body; // guest_id could be passed from frontend
+    const user_id = req.user ? req.user.id : null;
+
+    console.log('[CREATE WISHLIST] Received:', { product_id, guest_id, user_id });
+    if (!user_id && !guest_id) {
+      return res.status(400).json({ message: 'user_id or guest_id is required' });
+    }
+
+    const wishlistItem = await Wishlist.create({ user_id, product_id, guest_id });
     res.status(201).json(wishlistItem);
   } catch (error) {
+    console.error('[CREATE WISHLIST ERROR]', error);
     res.status(500).json({ error: 'Server error' });
   }
 };

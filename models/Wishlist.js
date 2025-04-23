@@ -15,6 +15,10 @@ Wishlist.init({
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  guest_id: {
+    type: DataTypes.UUID,
+    allowNull: true,
+  },
   product_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
