@@ -1,11 +1,8 @@
 const { Cart } = require('../models');
 
-// Create a cart
 exports.createCart = async (req, res) => {
   try {
-    // Try to get user_id from authenticated user
     const user_id = req.user ? req.user.id : null;
-    // Try to get guest_id from request body (sent by frontend)
     const { guest_id } = req.body;
 
     if (!user_id && !guest_id) {
@@ -15,12 +12,24 @@ exports.createCart = async (req, res) => {
     // Prefer user_id if available
     const finalGuestId = user_id ? null : guest_id;
 
+    // Check if a cart already exists for this user or guest
+    const existingCart = await Cart.findOne({
+      where: user_id ? { user_id } : { guest_id: finalGuestId },
+    });
+
+    if (existingCart) {
+      // Return existing cart instead of creating a new one
+      return res.status(200).json(existingCart);
+    }
+
+    // No existing cart found, create a new one
     const cart = await Cart.create({ user_id, guest_id: finalGuestId });
     res.status(201).json(cart);
   } catch (error) {
     res.status(500).json({ error: error.message || 'Server error' });
   }
 };
+
 
 
 // Get all carts
