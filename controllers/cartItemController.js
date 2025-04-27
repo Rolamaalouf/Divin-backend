@@ -1,92 +1,195 @@
-"use client";
+const { CartItem, Cart, Product } = require('../models');
 
-import { useUpdateCartItem } from "../hooks/useCartHooks";
-import { toast } from "react-toastify";
+// Get all cart items (admin/debug)
+exports.getCartItems = async (req, res) => {
+  try {
+    const cartItems = await CartItem.findAll({
+      include: [{ model: Product, attributes: ['id', 'name', 'price', 'image'] }],
+    });
 
-const CartItemList = ({ items = [], onDelete, onClearCart }) => {
-  const { mutate: updateCartItem } = useUpdateCartItem();
-
-  const handleUpdateQuantity = (cartItemId, quantity) => {
-    if (quantity < 1) return toast.error("Quantity must be greater than 0");
-
-    updateCartItem(
-      { id: cartItemId, quantity },
-      {
-        onSuccess: () => toast.success("Cart item updated!"),
-        onError: (err) =>
-          toast.error(err.response?.data?.message || "Failed to update cart item"),
-      }
-    );
-  };
-
-  const totalPrice = items.reduce(
-    (acc, item) => acc + item.quantity * (item.Product?.price || 0),
-    0
-  );
-
-  return (
-    <div>
-      {items.length === 0 ? (
-        <p className="text-sm text-gray-600">Cart is empty.</p>
-      ) : (
-        <>
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center gap-4 mb-4 border-b pb-4"
-            >
-              {/* Image Wrapper similar to ProductList */}
-              <div className="w-[100px] h-[100px] flex items-center justify-center overflow-hidden bg-white rounded border">
-                <div className="w-full h-full p-2">
-                  <img
-                    src={
-                      item.Product?.image && item.Product.image.length > 0
-                        ? item.Product.image[0]
-                        : "/placeholder.jpg"
-                    }
-                    alt={item.Product?.name || "Product image"}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center">
-                <p className="font-medium mb-1">{item.Product?.name || "Unnamed Product"}</p>
-                <p className="text-sm text-gray-600 mb-1">
-                  ${item.Product?.price?.toFixed(2) || "0.00"} × {item.quantity}
-                </p>
-                <input
-                  type="number"
-                  value={item.quantity}
-                  onChange={(e) =>
-                    handleUpdateQuantity(item.id, Number(e.target.value))
-                  }
-                  className="w-16 mt-1 px-2 py-1 border rounded text-sm"
-                  min={1}
-                />
-              </div>
-
-              <button
-                onClick={() => onDelete(item.id)}
-                className="text-red-600 text-sm hover:underline ml-auto"
-              >
-                Remove
-              </button>
-            </div>
-          ))}
-          <div className="mt-3">
-            <p className="font-semibold">Total: ${totalPrice.toFixed(2)}</p>
-            <button
-              onClick={onClearCart}
-              className="mt-2 w-full bg-red-500 text-white py-1.5 rounded hover:bg-red-600 text-sm"
-            >
-              Clear Cart
-            </button>
-          </div>
-        </>
-      )}
-    </div>
-  );
+    res.json(cartItems.map(item => ({
+      cartItemId: item.id,
+      cartId: item.cart_id, // <-- ADD THIS LINE
+      productId: item.Product.id,
+      name: item.Product.name,
+      price: item.Product.price,
+      image: item.Product.image,
+      quantity: item.quantity,
+    })));
+    
+  } catch (error) {
+    console.error('GET CART ITEMS ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 };
 
-export default CartItemList;
+// Get cart item by ID
+exports.getCartItemById = async (req, res) => {
+  try {
+    const cartItem = await CartItem.findByPk(req.params.id, {
+      include: [{ model: Product, attributes: ['id', 'name', 'price', 'image'] }],
+    });
+
+    if (!cartItem) return res.status(404).json({ message: 'Cart item not found' });
+
+    res.json({
+      cartItemId: cartItem.id,
+      cartId: cartItem.cart_id, 
+      productId: cartItem.Product.id,
+      name: cartItem.Product.name,
+      price: cartItem.Product.price,
+      image: cartItem.Product.image,
+      quantity: cartItem.quantity,
+    });
+    
+  } catch (error) {
+    console.error('GET CART ITEM BY ID ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Get cart items for current user or guest
+exports.getMyCartItems = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const guestId = req.query.guest_id;
+
+    if (!userId && !guestId) {
+      return res.status(400).json({ error: "Missing user ID or guest ID" });
+    }
+
+    const cart = await Cart.findOne({
+      where: userId ? { user_id: userId } : { guest_id: guestId },
+      order: [['createdAt', 'DESC']],
+    });
+
+    if (!cart) return res.json([]);
+
+    const cartItems = await CartItem.findAll({
+      where: { cart_id: cart.id },
+      include: [{ model: Product, attributes: ['id', 'name', 'price', 'image'] }],
+    });
+
+    res.json(cartItems.map(item => ({
+      cartItemId: item.id,
+      cartId: item.cart_id, // <-- ADD THIS LINE
+      productId: item.Product.id,
+      name: item.Product.name,
+      price: item.Product.price,
+      image: item.Product.image,
+      quantity: item.quantity,
+    })));
+    
+  } catch (error) {
+    console.error('GET MY CART ITEMS ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Create or add to cart item
+exports.createCartItem = async (req, res) => {
+  try {
+    const { cart_id, product_id, quantity, guest_id } = req.body;
+    const user_id = req.user?.id;
+
+    let finalCartId = cart_id;
+
+    if (!finalCartId) {
+      let cart = await Cart.findOne({
+        where: user_id ? { user_id } : { guest_id },
+        order: [['createdAt', 'DESC']],
+      });
+
+      if (!cart) {
+        cart = await Cart.create({
+          user_id: user_id || null,
+          guest_id: user_id ? null : guest_id,
+        });
+      }
+
+      finalCartId = cart.id;
+    }
+
+    let cartItem = await CartItem.findOne({
+      where: { cart_id: finalCartId, product_id },
+    });
+
+    if (cartItem) {
+      cartItem.quantity += quantity;
+      await cartItem.save();
+    } else {
+      cartItem = await CartItem.create({
+        cart_id: finalCartId,
+        product_id,
+        quantity,
+      });
+    }
+
+    const updatedCartItem = await CartItem.findByPk(cartItem.id, {
+      include: [{ model: Product, attributes: ['id', 'name', 'price', 'image'] }],
+    });
+
+    res.status(cartItem ? 200 : 201).json({
+      cartItemId: updatedCartItem.id,
+      productId: updatedCartItem.Product.id,
+      name: updatedCartItem.Product.name,
+      price: updatedCartItem.Product.price,
+      image: updatedCartItem.Product.image,
+      quantity: updatedCartItem.quantity,
+    });
+  } catch (error) {
+    console.error('CREATE CART ITEM ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Update cart item quantity
+exports.updateCartItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity } = req.body;
+
+    if (quantity < 1) {
+      return res.status(400).json({ message: 'Quantity must be greater than 0' });
+    }
+
+    const [updated] = await CartItem.update({ quantity }, { where: { id } });
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    const updatedCartItem = await CartItem.findByPk(id, {
+      include: [{ model: Product, attributes: ['id', 'name', 'price', 'image'] }],
+    });
+
+    res.json({
+      cartItemId: updatedCartItem.id,
+      productId: updatedCartItem.Product.id,
+      name: updatedCartItem.Product.name,
+      price: updatedCartItem.Product.price,
+      image: updatedCartItem.Product.image,
+      quantity: updatedCartItem.quantity,
+    });
+  } catch (error) {
+    console.error('UPDATE CART ITEM ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// Delete cart item
+exports.deleteCartItem = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await CartItem.destroy({ where: { id } });
+
+    if (!deleted) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    res.json({ message: 'Cart item deleted successfully' });
+  } catch (error) {
+    console.error('DELETE CART ITEM ERROR:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
