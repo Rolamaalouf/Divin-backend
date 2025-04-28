@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const orderItemController = require('../controllers/orderItemController');
-const { authenticate, authorize } = require('../middlewares/authMiddleware');
+const { optionalAuthenticate, authenticate, authorize } = require('../middlewares/authMiddleware');
 
 // Authenticated access
-router.post('/', authenticate, authorize(['admin']), orderItemController.createOrderItem);
-router.get('/', authenticate, authorize(['admin']), orderItemController.getOrderItems);
-router.get('/:id', authenticate, authorize(['admin']), orderItemController.getOrderItemById);
+router.post('/', optionalAuthenticate, orderItemController.createOrderItem);
+router.get('/', optionalAuthenticate, orderItemController.getOrderItems);
+router.get('/:id', optionalAuthenticate, orderItemController.getOrderItemById);
 router.put('/:id', authenticate, authorize(['admin']), orderItemController.updateOrderItem);
 router.delete('/:id', authenticate, authorize(['admin']), orderItemController.deleteOrderItem);
 router.get('/my-orders', authenticate, authorize(['admin', 'customer']), orderItemController.getMyOrderItems);

@@ -1,29 +1,48 @@
-const { Order } = require('../models');
+const { Order, OrderItem } = require('../models');
 
-// Create a new order (supports both customer and guest)
 exports.createOrder = async (req, res) => {
   try {
-    const { user_id, guest_id, status, address, shipping_fees, promocode } = req.body;
+    let { user_id, guest_id, status, address, shipping_fees, promocode, items } = req.body;
 
-    if (!user_id && !guest_id) {
-      return res.status(400).json({ error: 'Either user_id or guest_id is required.' });
+    // Validate presence of one and only one of user_id or guest_id
+    if (!!user_id === !!guest_id) {
+      return res.status(400).json({ error: 'Provide either user_id or guest_id, not both.' });
     }
 
-    const order = await Order.create({
-      user_id: user_id || null,
-      guest_id: guest_id || null,
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Order must contain at least one item.' });
+    }
+
+    // Create the order
+    const orderData = {
       status,
       address,
       shipping_fees,
       promocode,
-    });
+      user_id: user_id || null,
+      guest_id: guest_id || null
+    };
 
-    res.status(201).json(order);
+    const order = await Order.create(orderData);
+
+    // Create order items
+    const orderItems = items.map(item => ({
+      order_id: order.id,
+      product_id: item.product_id,
+      quantity: item.quantity,
+      price: item.price
+    }));
+
+    await OrderItem.bulkCreate(orderItems);
+
+    res.status(201).json({ order, orderItems });
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+
 
 // Get all orders
 exports.getOrders = async (req, res) => {
