@@ -25,17 +25,16 @@ Wishlist.belongsTo(User, { foreignKey: 'user_id' });
 Cart.hasMany(CartItem, { foreignKey: 'cart_id', onDelete: 'CASCADE' });
 CartItem.belongsTo(Cart, { foreignKey: 'cart_id' });
 
-// Order and OrderItem associations
-Order.hasMany(OrderItem, { foreignKey: 'order_id', onDelete: 'CASCADE' });
+
+Order.hasMany(OrderItem, { foreignKey: 'order_id', onDelete: 'CASCADE', as: 'orderItems' });
 OrderItem.belongsTo(Order, { foreignKey: 'order_id' });
 
-// Product associations (already defined in Product.js)
-// Product belongs to Category, etc.
+
 Product.hasMany(CartItem, { foreignKey: 'product_id', onDelete: 'CASCADE' });
 CartItem.belongsTo(Product, { foreignKey: 'product_id' });
 
 Product.hasMany(OrderItem, { foreignKey: 'product_id', onDelete: 'CASCADE' });
-OrderItem.belongsTo(Product, { foreignKey: 'product_id' });
+OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 
 Product.hasMany(Wishlist, { foreignKey: 'product_id', onDelete: 'CASCADE' });
 Wishlist.belongsTo(Product, { foreignKey: 'product_id' });

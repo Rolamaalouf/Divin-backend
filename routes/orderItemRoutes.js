@@ -9,7 +9,8 @@ router.get('/', optionalAuthenticate, orderItemController.getOrderItems);
 router.get('/:id', optionalAuthenticate, orderItemController.getOrderItemById);
 router.put('/:id', authenticate, authorize(['admin']), orderItemController.updateOrderItem);
 router.delete('/:id', authenticate, authorize(['admin']), orderItemController.deleteOrderItem);
-router.get('/my-orders', authenticate, authorize(['admin', 'customer']), orderItemController.getMyOrderItems);
+router.get('/my-orders', optionalAuthenticate, authorize(['admin', 'customer']), orderItemController.getMyOrderItems);
+router.get('/by-order/:orderId', orderItemController.getOrderItemsByOrderId);
 
 // Guest order item creation (no auth)
 router.post('/guest', orderItemController.createGuestOrderItem);

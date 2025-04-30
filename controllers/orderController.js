@@ -2,35 +2,34 @@ const { Order, OrderItem } = require('../models');
 
 exports.createOrder = async (req, res) => {
   try {
-    let { user_id, guest_id, status, address, shipping_fees, promocode, items } = req.body;
+    const { status, address, shipping_fees, promocode, items } = req.body;
 
-    // Validate presence of one and only one of user_id or guest_id
+    const user_id = req.user?.id || null;
+    const guest_id = req.guestId || req.body.guest_id || null;
+
+    // Validate: must have either user_id or guest_id, not both
     if (!!user_id === !!guest_id) {
-      return res.status(400).json({ error: 'Provide either user_id or guest_id, not both.' });
+      return res.status(400).json({ error: 'Provide either user or guest session.' });
     }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item.' });
     }
 
-    // Create the order
-    const orderData = {
+    const order = await Order.create({
       status,
       address,
       shipping_fees,
       promocode,
-      user_id: user_id || null,
-      guest_id: guest_id || null
-    };
+      user_id,
+      guest_id,
+    });
 
-    const order = await Order.create(orderData);
-
-    // Create order items
-    const orderItems = items.map(item => ({
+    const orderItems = items.map((item) => ({
       order_id: order.id,
       product_id: item.product_id,
       quantity: item.quantity,
-      price: item.price
+      price: item.price,
     }));
 
     await OrderItem.bulkCreate(orderItems);
