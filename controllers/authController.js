@@ -45,8 +45,8 @@ exports.login = async (req, res) => {
 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // for local frontend
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',  
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
       maxAge: 24 * 60 * 60 * 1000,
     });
 
