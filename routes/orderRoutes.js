@@ -10,7 +10,5 @@ router.get('/:id', authenticate, authorize(['admin', 'customer']), orderControll
 router.put('/:id', authenticate, authorize(['admin']), orderController.updateOrder);
 router.delete('/:id', authenticate, authorize(['admin']), orderController.deleteOrder);
 
-// Guest creates order (no authentication)
-router.post('/guest', orderController.createGuestOrder);
 
 module.exports = router;

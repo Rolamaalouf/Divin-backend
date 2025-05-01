@@ -1,4 +1,4 @@
-const { Order, OrderItem } = require('../models');
+const { Order, OrderItem, Product } = require('../models');
 
 exports.createOrder = async (req, res) => {
   try {
@@ -31,6 +31,14 @@ exports.createOrder = async (req, res) => {
       quantity: item.quantity,
       price: item.price,
     }));
+
+    //Decrement product stock
+for (const item of items) {
+  await Product.decrement('stock', {
+    by: item.quantity,
+    where: { id: item.product_id }
+  });
+}
 
     await OrderItem.bulkCreate(orderItems);
 
@@ -85,18 +93,6 @@ exports.deleteOrder = async (req, res) => {
     if (!deleted) return res.status(404).json({ message: 'Order not found' });
     res.json({ message: 'Order deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
-  }
-};
-exports.createGuestOrder = async (req, res) => {
-  try {
-    const { guest_id, status, address, shipping_fees, promocode } = req.body;
-    const order = await Order.create({
-      guest_id, status, address, shipping_fees, promocode
-    });
-    res.status(201).json(order);
-  } catch (error) {
-    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 };
