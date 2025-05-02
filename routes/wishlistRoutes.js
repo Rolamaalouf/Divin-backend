@@ -7,6 +7,7 @@ const {authenticate} = require('../middlewares/authMiddleware');
 const { optionalAuthenticate } = require('../middlewares/authMiddleware');
 
 router.post('/', optionalAuthenticate, wishlistController.createWishlistItem);
+router.get('/mywishlist', optionalAuthenticate, wishlistController.getMyWishlist);
 router.get('/', optionalAuthenticate, wishlistController.getWishlist);
 router.get('/:id', optionalAuthenticate, wishlistController.getWishlistItemById);
 router.put('/:id', authenticate, wishlistController.updateWishlistItem);

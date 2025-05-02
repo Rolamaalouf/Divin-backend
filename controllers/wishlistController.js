@@ -18,7 +18,25 @@ exports.createWishlistItem = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+exports.getMyWishlist = async (req, res) => {
+  try {
+    const user_id = req.user?.id || null;
+    const guest_id = req.query.guest_id || null;
 
+    if (!user_id && !guest_id) {
+      return res.status(400).json({ message: 'Either user or guest ID must be provided' });
+    }
+
+    const wishlist = await Wishlist.findAll({
+      where: user_id ? { user_id } : { guest_id }
+    });
+
+    res.json(wishlist);
+  } catch (error) {
+    console.error('[GET MY WISHLIST ERROR]', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
 exports.getWishlist = async (req, res) => {
   try {
     const wishlist = await Wishlist.findAll();

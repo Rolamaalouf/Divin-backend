@@ -7,7 +7,7 @@ const { optionalAuthenticate, authenticate, authorize } = require('../middleware
 router.post('/', optionalAuthenticate, orderController.createOrder);
 router.get('/', optionalAuthenticate,  orderController.getOrders);
 router.get('/:id', authenticate, authorize(['admin', 'customer']), orderController.getOrderById);
-router.put('/:id', authenticate, authorize(['admin']), orderController.updateOrder);
+router.put('/:id', optionalAuthenticate, orderController.updateOrder);
 router.delete('/:id', authenticate, authorize(['admin']), orderController.deleteOrder);
 
 
