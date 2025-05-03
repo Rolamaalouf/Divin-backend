@@ -37,7 +37,8 @@ Product.hasMany(OrderItem, { foreignKey: 'product_id', onDelete: 'CASCADE' });
 OrderItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
 
 Product.hasMany(Wishlist, { foreignKey: 'product_id', onDelete: 'CASCADE' });
-Wishlist.belongsTo(Product, { foreignKey: 'product_id' });
+Wishlist.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
+
 
 module.exports = {
   sequelize,

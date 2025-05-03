@@ -3,21 +3,26 @@ const { Wishlist } = require('../models');
 
 exports.createWishlistItem = async (req, res) => {
   try {
-    const { product_id, guest_id } = req.body; // guest_id could be passed from frontend
+    const { product_id } = req.body;
     const user_id = req.user ? req.user.id : null;
 
-    console.log('[CREATE WISHLIST] Received:', { product_id, guest_id, user_id });
+    // Only use guest_id if user is NOT logged in
+    const guest_id = !user_id ? req.body.guest_id : null;
+
+    console.log('[CREATE WISHLIST] Received:', { product_id, user_id, guest_id });
+
     if (!user_id && !guest_id) {
       return res.status(400).json({ message: 'user_id or guest_id is required' });
     }
 
-    const wishlistItem = await Wishlist.create({ user_id, product_id, guest_id });
+    const wishlistItem = await Wishlist.create({ user_id, guest_id, product_id });
     res.status(201).json(wishlistItem);
   } catch (error) {
     console.error('[CREATE WISHLIST ERROR]', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 exports.getMyWishlist = async (req, res) => {
   try {
     const user_id = req.user?.id || null;
@@ -27,8 +32,13 @@ exports.getMyWishlist = async (req, res) => {
       return res.status(400).json({ message: 'Either user or guest ID must be provided' });
     }
 
+    const whereClause = user_id
+      ? { user_id, guest_id: null }  // Authenticated user: exclude guest items
+      : { guest_id, user_id: null }; // Guest: exclude authenticated items
+
     const wishlist = await Wishlist.findAll({
-      where: user_id ? { user_id } : { guest_id }
+      where: whereClause,
+      include: ['product'], // if you're using associations
     });
 
     res.json(wishlist);
@@ -37,6 +47,8 @@ exports.getMyWishlist = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
+
 exports.getWishlist = async (req, res) => {
   try {
     const wishlist = await Wishlist.findAll();
