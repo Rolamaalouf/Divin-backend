@@ -19,7 +19,18 @@ Order.init({
     type: DataTypes.UUID,
     allowNull: true, // NULL for logged-in users
   },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: true, // Optional for logged-in users
+  },
 
+  email: {
+    type: DataTypes.STRING,
+    allowNull: true, // Optional for logged-in users
+    validate: {
+      isEmail: true
+    }
+  },
   promocode: {
     type: DataTypes.STRING,
     allowNull: true

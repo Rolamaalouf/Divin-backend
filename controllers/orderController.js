@@ -2,7 +2,7 @@ const { Order, OrderItem, Product } = require('../models');
 
 exports.createOrder = async (req, res) => {
   try {
-    const { status, address, shipping_fees, promocode, items } = req.body;
+    const { status, address, shipping_fees, promocode, items, name, email } = req.body;
 
     const user_id = req.user?.id || null;
     const guest_id = req.guestId || req.body.guest_id || null;
@@ -23,6 +23,8 @@ exports.createOrder = async (req, res) => {
       promocode,
       user_id,
       guest_id,
+      name,
+      email
     });
 
     const orderItems = items.map((item) => ({
@@ -32,13 +34,13 @@ exports.createOrder = async (req, res) => {
       price: item.price,
     }));
 
-    //Decrement product stock
-for (const item of items) {
-  await Product.decrement('stock', {
-    by: item.quantity,
-    where: { id: item.product_id }
-  });
-}
+    // Decrement product stock
+    for (const item of items) {
+      await Product.decrement('stock', {
+        by: item.quantity,
+        where: { id: item.product_id }
+      });
+    }
 
     await OrderItem.bulkCreate(orderItems);
 
