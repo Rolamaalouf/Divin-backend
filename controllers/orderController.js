@@ -1,5 +1,6 @@
-const { Order, OrderItem, Product } = require('../models');
+const { Order, OrderItem, Product, User } = require('../models');
 
+// Create a new order
 exports.createOrder = async (req, res) => {
   try {
     const { status, address, shipping_fees, promocode, items, name, email } = req.body;
@@ -7,7 +8,6 @@ exports.createOrder = async (req, res) => {
     const user_id = req.user?.id || null;
     const guest_id = req.guestId || req.body.guest_id || null;
 
-    // Validate: must have either user_id or guest_id, not both
     if (!!user_id === !!guest_id) {
       return res.status(400).json({ error: 'Provide either user or guest session.' });
     }
@@ -34,7 +34,6 @@ exports.createOrder = async (req, res) => {
       price: item.price,
     }));
 
-    // Decrement product stock
     for (const item of items) {
       await Product.decrement('stock', {
         by: item.quantity,
@@ -51,43 +50,116 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-
-
-// Get all orders
+// Get all orders (with user info)
 exports.getOrders = async (req, res) => {
   try {
-    const orders = await Order.findAll();
+    const orders = await Order.findAll({
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email'],
+          required : false
+        }
+      ]
+    });
     res.json(orders);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// Get order by ID
+// Get single order with details
 exports.getOrderById = async (req, res) => {
   try {
-    const order = await Order.findByPk(req.params.id);
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const order = await Order.findByPk(req.params.id, {
+      include: [
+        {
+          model: OrderItem,
+          as: 'orderItems',
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              attributes: ['id', 'name', 'price', 'image']
+            }
+          ]
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email'],
+          required : false
+        }
+      ]
+    });
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
     res.json(order);
   } catch (error) {
+    console.error('Get Order by ID error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// Update an order
+// Update order
+// ... your other imports and code ...
+
 exports.updateOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const [updated] = await Order.update(req.body, { where: { id } });
-    if (!updated) return res.status(404).json({ message: 'Order not found' });
-    const updatedOrder = await Order.findByPk(id);
+    const user_id = req.user?.id || null;
+    const guest_id = req.guestId || req.body.guest_id || null;
+
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only allow if the user or guest owns the order
+    if (
+      (order.user_id && order.user_id !== user_id) ||
+      (order.guest_id && order.guest_id !== guest_id)
+    ) {
+      return res.status(403).json({ message: 'Not authorized to update this order' });
+    }
+
+    await order.update(req.body);
+
+    const updatedOrder = await Order.findByPk(id, {
+      include: [
+        {
+          model: OrderItem,
+          as: 'orderItems',
+          include: [
+            {
+              model: Product,
+              as: 'product',
+              attributes: ['id', 'name', 'price', 'image']
+            }
+          ]
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['id', 'name', 'email'],
+          required: false
+        }
+      ]
+    });
+
     res.json(updatedOrder);
   } catch (error) {
+    console.error('Update Order error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-// Delete an order
+
+// Delete order
 exports.deleteOrder = async (req, res) => {
   try {
     const { id } = req.params;
@@ -98,4 +170,3 @@ exports.deleteOrder = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-

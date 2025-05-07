@@ -91,6 +91,7 @@ exports.getMyOrderItems = async (req, res) => {
         },
         {
           model: Product,
+          as: 'product', // ✅ match the alias used in association
           attributes: ['name', 'price', 'image']
         }
       ]

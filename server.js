@@ -13,6 +13,7 @@ const cartItemRoutes = require('./routes/cartItemRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const orderItemRoutes = require('./routes/orderItemRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
+const cartTransferRoutes = require('./routes/cartTransferRoutes');
 
 const app = express();
 // Enable CORS for all routes
@@ -33,6 +34,7 @@ app.use('/api/cart-items', cartItemRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/order-items', orderItemRoutes);
 app.use('/api/wishlists', wishlistRoutes);
+app.use('/api/cart-transfer', cartTransferRoutes);
 
 // Sync database and start server
 sequelize.sync({ alter: true })
