@@ -114,19 +114,24 @@ exports.updateOrder = async (req, res) => {
     const user_id = req.user?.id || null;
     const guest_id = req.guestId || req.body.guest_id || null;
 
+    // Fetch the order first
+    const order = await Order.findByPk(id);
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Only allow if the user or guest owns the order
+    const isAdmin = req.user?.role === 'admin';
+
+    // Only allow if the user/guest owns the order, OR if the user is an admin
     if (
-      (order.user_id && order.user_id !== user_id) ||
-      (order.guest_id && order.guest_id !== guest_id)
+      !isAdmin &&
+      ((order.user_id && order.user_id !== user_id) ||
+       (order.guest_id && order.guest_id !== guest_id))
     ) {
       return res.status(403).json({ message: 'Not authorized to update this order' });
     }
-
+    
     await order.update(req.body);
 
     const updatedOrder = await Order.findByPk(id, {
@@ -151,12 +156,14 @@ exports.updateOrder = async (req, res) => {
       ]
     });
 
-    res.json(updatedOrder);
+    res.status(200).json(updatedOrder);
+
   } catch (error) {
-    console.error('Update Order error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Update Order error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 // Delete order
