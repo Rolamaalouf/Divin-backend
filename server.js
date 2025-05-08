@@ -13,13 +13,12 @@ const cartItemRoutes = require('./routes/cartItemRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const orderItemRoutes = require('./routes/orderItemRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
-const cartTransferRoutes = require('./routes/cartTransferRoutes');
 
 const app = express();
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow your frontend's URL
-  credentials: true,              // Allow cookies to be sent (if needed)
+  origin: 'https://divin-backend.onrender.com', 
+  credentials: true,              
 }));
 // Middlewares
 app.use(express.json());
@@ -34,7 +33,6 @@ app.use('/api/cart-items', cartItemRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/order-items', orderItemRoutes);
 app.use('/api/wishlists', wishlistRoutes);
-app.use('/api/cart-transfer', cartTransferRoutes);
 
 // Sync database and start server
 sequelize.sync({ alter: true })
