@@ -17,7 +17,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const app = express();
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'https://divin-backend.onrender.com', 
+  origin: 'https://divin-frontend.vercel.app', 
   credentials: true,              
 }));
 // Middlewares
