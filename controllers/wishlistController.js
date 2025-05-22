@@ -51,12 +51,25 @@ exports.getMyWishlist = async (req, res) => {
 
 exports.getWishlist = async (req, res) => {
   try {
-    const wishlist = await Wishlist.findAll();
+    const { user_id, guest_id } = req.query;
+    const where = {};
+
+    if (user_id !== undefined) {
+      where.user_id = user_id;
+    }
+
+    if (guest_id !== undefined) {
+      where.guest_id = guest_id;
+    }
+
+    const wishlist = await Wishlist.findAll({ where });
     res.json(wishlist);
   } catch (error) {
+    console.error('Error fetching wishlist:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 
 exports.getWishlistItemById = async (req, res) => {
   try {
