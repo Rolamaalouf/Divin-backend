@@ -17,7 +17,7 @@ const cartTransferRoutes = require('./routes/cartTransferRoutes');
 const app = express();
 // Enable CORS for all routes
 app.use(cors({
-  origin: 'http://divin-frontend.vercel.app', // Allow your frontend's URL
+  origin: 'https://divin-frontend.vercel.app', // Allow your frontend's URL
   credentials: true,              // Allow cookies to be sent (if needed)
 }));
 
