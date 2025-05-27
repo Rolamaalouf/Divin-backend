@@ -15,13 +15,23 @@ const orderItemRoutes = require('./routes/orderItemRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const cartTransferRoutes = require('./routes/cartTransferRoutes');
 const app = express();
-// Enable CORS for all routes
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://divin-frontend.vercel.app',
+];
+
 app.use(cors({
-  origin: 'https://divin-frontend.vercel.app', // Allow your frontend's URL
-  credentials: true,              // Allow cookies to be sent (if needed)
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like Postman or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
 }));
 
-// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
