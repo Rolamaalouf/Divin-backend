@@ -43,11 +43,13 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
+const isProduction = process.env.NODE_ENV === 'production';
+
 res.cookie('token', token, {
   httpOnly: true,
-  secure: true,            // must be true in production with HTTPS
-  sameSite: 'None',        // allows cross-site cookies with secure
-  maxAge: 24 * 60 * 60 * 1000,
+  secure: isProduction,       // only true in production
+  sameSite: isProduction ? 'None' : 'Lax', // 'None' requires HTTPS
+  maxAge: 24 * 60 * 60 * 1000, // 1 day
   path: '/',
 });
 
