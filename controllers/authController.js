@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
-
 exports.register = async (req, res) => {
   try {
     const { email, password, name, role, address } = req.body;
@@ -43,17 +42,16 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
-const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === 'production';
 
-res.cookie('token', token, {
-  httpOnly: true,
-  secure: isProduction,       // only true in production
-  sameSite: isProduction ? 'None' : 'Lax', // 'None' requires HTTPS
-  maxAge: 24 * 60 * 60 * 1000, // 1 day
-  path: '/',
-});
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: isProduction,                    // only true in production
+      sameSite: isProduction ? 'None' : 'Lax', // 'None' requires HTTPS
+      maxAge: 24 * 60 * 60 * 1000,             // 1 day
+      path: '/',                               // must match on clearCookie
+    });
 
-    
     res.json({ message: 'Logged in successfully', user: { id: user.id, role: user.role } });
   } catch (error) {
     console.error(error);
@@ -62,9 +60,19 @@ res.cookie('token', token, {
 };
 
 exports.logout = (req, res) => {
-  res.clearCookie('token');
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // Clear the cookie using the same settings as when it was set
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'None' : 'Lax',
+    path: '/',
+  });
+
   res.json({ message: 'Logged out successfully' });
 };
+
 exports.editUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -99,6 +107,7 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.findAll({
@@ -132,6 +141,7 @@ exports.getUserById = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 exports.getCurrentUser = async (req, res) => {
   try {
     const token = req.cookies.token;
