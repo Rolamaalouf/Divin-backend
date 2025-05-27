@@ -17,21 +17,21 @@ const cartTransferRoutes = require('./routes/cartTransferRoutes');
 
 const app = express();
 const allowedOrigins = [
-  "http://localhost:3000",
   "https://divin-frontend.vercel.app",
 ];
 
-app.options('*', cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
-
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  })
+);
 
 // Middlewares
 app.use(express.json());
