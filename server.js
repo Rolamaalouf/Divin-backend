@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -14,23 +13,34 @@ const orderRoutes = require('./routes/orderRoutes');
 const orderItemRoutes = require('./routes/orderItemRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const cartTransferRoutes = require('./routes/cartTransferRoutes');
+
 const app = express();
+
 const allowedOrigins = [
   'http://localhost:3000',
   'https://divin-frontend.vercel.app',
+  'http://127.0.0.1:3000',
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like Postman or curl)
+    console.log('Incoming request origin:', origin);
+    // Allow requests with no origin (like Postman, curl, or mobile apps)
     if (!origin) return callback(null, true);
+
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-    return callback(new Error('Not allowed by CORS'));
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
-}));
+};
+
+// Use CORS middleware
+app.use(cors(corsOptions));
+
+// Explicitly enable pre-flight OPTIONS requests for all routes
+app.options('*', cors(corsOptions));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -50,7 +60,7 @@ app.use('/api/cart-transfer', cartTransferRoutes);
 sequelize.sync({ alter: true })
   .then(() => {
     console.log('Database connected and synchronized.');
-    const PORT = process.env.PORT;
+    const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
   .catch((error) => {
