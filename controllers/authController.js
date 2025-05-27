@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 
+
 exports.register = async (req, res) => {
   try {
     const { email, password, name, role, address } = req.body;
@@ -42,13 +43,14 @@ exports.login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: '1d' }
     );
+const isProduction = process.env.NODE_ENV === 'production';
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true, // Required for SameSite=None to work
-      sameSite: 'None', // Allow cross-site cookie (from Render to localhost)
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
+res.cookie('token', token, {
+  httpOnly: true,
+  secure: isProduction, // Only set secure in production (must use HTTPS)
+  sameSite: isProduction ? 'None' : 'Lax',
+  maxAge: 24 * 60 * 60 * 1000, // 1 day
+});
     
     res.json({ message: 'Logged in successfully', user: { id: user.id, role: user.role } });
   } catch (error) {
